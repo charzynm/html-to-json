@@ -82,25 +82,23 @@ def extract_tasks(section_id):
 
 def extract_salary(section_id):
     salary_data = {}
-    posting_salary_bonus_section = soup.find('section', {'id': section_id})
-    if posting_salary_bonus_section:
-        salary_info = posting_salary_bonus_section.find('common-posting-salaries-list', class_='salary')
-        if salary_info:
-            salary_text = salary_info.find('h4').get_text(strip=True)
-            salary_details = salary_info.find('div', class_='paragraph').get_text(strip=True)
-            salary_data['salary'] = {
-                'amount': salary_text,
-                'details': salary_details
-            }
-        
-        bonus_info = posting_salary_bonus_section.find('common-postings-bonus', class_='d-flex flex-column')
-        if bonus_info:
-            bonus_text = bonus_info.find('a').get_text(strip=True)
-            bonus_details = bonus_info.find('div', class_='p-3').get_text(strip=True)
-            salary_data['bonus'] = {
-                'percentage': bonus_text,
-                'details': bonus_details
-            }
+    salary_info = soup.find('common-posting-salaries-list')
+    if salary_info:
+        salary_text = salary_info.find('h4').get_text(strip=True)
+        salary_details = salary_info.find('div', class_='paragraph').get_text(strip=True)
+        salary_data['salary'] = {
+            'amount': salary_text,
+            'details': salary_details
+        }
+    
+    bonus_info = soup.find('common-postings-bonus', class_='d-flex flex-column')
+    if bonus_info:
+        bonus_text = bonus_info.find('a').get_text(strip=True)
+        bonus_details = bonus_info.find('div', class_='p-3').get_text(strip=True)
+        salary_data['bonus'] = {
+            'percentage': bonus_text,
+            'details': bonus_details
+        }
     return salary_data
 
 url = 'https://nofluffjobs.com/pl/job/data-engineer-talent-hills-warszawa-1'
