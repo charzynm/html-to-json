@@ -2,45 +2,35 @@ from bs4 import BeautifulSoup
 import json
 import requests
 
-def fetch_html(url):
+def fetch_html_content(url):
     try:
         response = requests.get(url)
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200:
-            return response.content  # Return the HTML content
-        else:
-            print(f"Failed to retrieve HTML: Status code {response.status_code}")
+        response.raise_for_status()
+        return response.content
     except requests.exceptions.RequestException as e:
         print(f"Error fetching HTML: {e}")
+        return None
 
-def extract_requirements(section_id):
+def parse_section_text(soup, section_id, tag='li', tag_class=None):
     section = soup.find('section', {'id': section_id})
-    requirements = []
-    if section:
-        items = section.find_all('li')
-        for item in items:
-            span = item.find('span')
-            if span:
-                requirements.append(span.get_text(strip=True))
-            else:
-                requirements.append(item.get_text(strip=True))
-    return requirements
+    if not section:
+        section = soup.find('div', {'id': section_id})
+    if not section:
+        return []
 
-def extract_posting_header():
+    items = section.find_all(tag, class_=tag_class) if tag_class else section.find_all(tag)
+    return [item.get_text(strip=True) for item in items]
+
+def parse_posting_header(soup):
     header_data = {}
     header_section = soup.find('common-posting-header')
     if header_section:
-        job_title = header_section.find('h1')
-        company_name = header_section.find('a', {'id': 'postingCompanyUrl'})
-        company_logo = header_section.find('img')
-        
-        header_data['Job Title'] = job_title.get_text(strip=True) if job_title else None
-        header_data['Company Name'] = company_name.get_text(strip=True) if company_name else None
-        header_data['Company Logo URL'] = company_logo['src'] if company_logo else None
-
+        header_data['Job Title'] = header_section.find('h1').get_text(strip=True) if header_section.find('h1') else None
+        header_data['Company Name'] = header_section.find('a', {'id': 'postingCompanyUrl'}).get_text(strip=True) if header_section.find('a', {'id': 'postingCompanyUrl'}) else None
+        header_data['Company Logo URL'] = header_section.find('img')['src'] if header_section.find('img') else None
     return header_data
 
-def extract_posting_info():
+def parse_posting_info(soup):
     info_data = {}
     info_section = soup.find('section', {'class': ''})
     if info_section:
@@ -51,82 +41,69 @@ def extract_posting_info():
         if category:
             category_text = category.get_text(strip=True).replace("Kategoria:", "").strip()
             info_data['Category'] = [cat.strip() for cat in category_text.split(',')]
-        
         if seniority:
             seniority_text = seniority.find('span', {'class': 'mr-10 font-weight-medium'})
             info_data['Seniority'] = seniority_text.get_text(strip=True) if seniority_text else None
-
         if locations:
-            location_text = locations.get_text(strip=True)
-            info_data['Location'] = location_text
-
+            info_data['Location'] = locations.get_text(strip=True)
     return info_data
 
-def extract_description(section_id):
-    description_data = ""
-    section = soup.find('section', {'id': section_id})
-    if section:
-        paragraphs = section.find_all('p')
-        for paragraph in paragraphs:
-            description_data += paragraph.get_text(strip=True) + " "
-    return description_data.strip()
+def parse_description(soup, section_id):
+    description_data = " ".join(parse_section_text(soup, section_id, tag='p'))
+    return description_data
 
-def extract_tasks(section_id):
-    tasks = []
-    section = soup.find('section', {'id': section_id})
-    if section:
-        items = section.find_all('li')
-        for item in items:
-            tasks.append(item.get_text(strip=True))
-    return tasks
+def parse_tasks(soup, section_id):
+    return parse_section_text(soup, section_id, tag='li')
 
-def extract_salary():
+def parse_salary_info(soup):
     salary_data = {}
     salary_info = soup.find('common-posting-salaries-list')
     if salary_info:
-        salary_text = salary_info.find('h4').get_text(strip=True)
-        salary_details = salary_info.find('div', class_='paragraph').get_text(strip=True)
-        salary_data['salary'] = {
-            'amount': salary_text,
-            'details': salary_details
-        }
-    
+        salary_text = salary_info.find('h4').get_text(strip=True) if salary_info.find('h4') else None
+        salary_details = salary_info.find('div', class_='paragraph').get_text(strip=True) if salary_info.find('div', class_='paragraph') else None
+        salary_data['salary'] = {'amount': salary_text, 'details': salary_details}
+
     bonus_info = soup.find('common-postings-bonus', class_='d-flex flex-column')
     if bonus_info:
-        bonus_text = bonus_info.find('a').get_text(strip=True)
-        bonus_details = bonus_info.find('div', class_='p-3').get_text(strip=True)
-        salary_data['bonus'] = {
-            'percentage': bonus_text,
-            'details': bonus_details
-        }
+        bonus_text = bonus_info.find('a').get_text(strip=True) if bonus_info.find('a') else None
+        bonus_details = bonus_info.find('div', class_='p-3').get_text(strip=True) if bonus_info.find('div', class_='p-3') else None
+        salary_data['bonus'] = {'percentage': bonus_text, 'details': bonus_details}
     return salary_data
 
+def parse_job_offer_requirements(soup):
+    requirements = []
+    description_section = soup.find('section', {'data-cy-section': 'JobOffer_Requirements'})
+    if description_section:
+        ul = description_section.find('ul')
+        if ul:
+            requirements = [item.get_text(strip=True) for item in ul.find_all('li')]
+    return requirements
+
+def extract_job_posting_data(url):
+    html_content = fetch_html_content(url)
+    if not html_content:
+        return None
+
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    data = {
+        "Header": parse_posting_header(soup),
+        "Info": parse_posting_info(soup),
+        "Obowiązkowe": parse_section_text(soup, 'posting-requirements'),
+        "Mile widziane": parse_section_text(soup, 'posting-nice-to-have'),
+        "Opis wymagań": parse_job_offer_requirements(soup),
+        "Opis oferty": parse_description(soup, 'posting-description'),
+        "Zakres obowiązków": parse_tasks(soup, 'posting-tasks'),
+        "Szczegóły oferty": parse_tasks(soup, 'posting-specs'),
+        "Sprzęt": parse_tasks(soup, 'posting-equipment'),
+        "Metodologia": parse_tasks(soup, 'posting-environment'),
+        "Udogodnienia w biurze": parse_tasks(soup, 'posting-benefits'),
+        "Wynagrodzenie": parse_salary_info(soup)
+    }
+
+    return json.dumps(data, ensure_ascii=False, indent=4)
+
 url = 'https://nofluffjobs.com/pl/job/data-engineer-talent-hills-warszawa-1'
-soup = BeautifulSoup(fetch_html(url), 'html.parser')
-
-data = {
-    "Header": extract_posting_header(),
-    "Info": extract_posting_info(),
-    "Obowiązkowe": extract_requirements('posting-requirements'),
-    "Mile widziane": extract_requirements('posting-nice-to-have'),
-    "Opis wymagań": [],
-    "Opis oferty": extract_description('posting-description'),
-    "Zakres obowiązków": extract_tasks('posting-tasks'),
-    "Szczegóły oferty": extract_tasks('posting-specs'),
-    "Sprzęt": extract_tasks('posting-equipment'),
-    "Metodologia": extract_tasks('posting-environment'),
-    "Udogodnienia w biurze": extract_tasks('posting-benefits'),
-    "Wynagrodzenie": extract_salary()
-}
-
-# Extracting job description
-description_section = soup.find('section', {'data-cy-section': 'JobOffer_Requirements'})
-if description_section:
-    ul = description_section.find('ul')
-    if ul:
-        description_items = ul.find_all('li')
-        for item in description_items:
-            data["Opis wymagań"].append(item.get_text(strip=True))
-
-json_data = json.dumps(data, ensure_ascii=False, indent=4)
-print(json_data)
+json_data = extract_job_posting_data(url)
+if json_data:
+    print(json_data)
