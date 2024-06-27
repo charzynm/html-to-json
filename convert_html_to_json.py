@@ -80,7 +80,7 @@ def extract_tasks(section_id):
             tasks.append(item.get_text(strip=True))
     return tasks
 
-def extract_salary(section_id):
+def extract_salary():
     salary_data = {}
     salary_info = soup.find('common-posting-salaries-list')
     if salary_info:
@@ -116,7 +116,7 @@ data = {
     "Sprzęt": extract_tasks('posting-equipment'),
     "Metodologia": extract_tasks('posting-environment'),
     "Udogodnienia w biurze": extract_tasks('posting-benefits'),
-    "Wynagrodzenie": extract_salary('posting-salary-bonus')
+    "Wynagrodzenie": extract_salary()
 }
 
 # Extracting job description
