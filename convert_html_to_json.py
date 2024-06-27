@@ -17,6 +17,9 @@ def parse_section_text(soup, section_id, container_tags, tag='li', tag_class=Non
         section = soup.find(container_tag, {'id': section_id})
         if section:
             break
+        section = soup.find(container_tag, {'data-cy-section': section_id})
+        if section:
+            break
 
     if not section:
         return []
