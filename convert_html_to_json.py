@@ -114,7 +114,8 @@ data = {
     "Zakres obowiązków": extract_tasks('posting-tasks'),
     "Szczegóły oferty": extract_tasks('posting-specs'),
     "Sprzęt": extract_tasks('posting-equipment'),
-    "Uwagi": extract_tasks('posting-notes'),
+    "Metodologia": extract_tasks('posting-environment'),
+    "Udogodnienia w biurze": extract_tasks('posting-benefits'),
     "Wynagrodzenie": extract_salary('posting-salary-bonus')
 }
 
