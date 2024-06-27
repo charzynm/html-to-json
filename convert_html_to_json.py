@@ -11,10 +11,13 @@ def fetch_html_content(url):
         print(f"Error fetching HTML: {e}")
         return None
 
-def parse_section_text(soup, section_id, tag='li', tag_class=None):
-    section = soup.find('section', {'id': section_id})
-    if not section:
-        section = soup.find('div', {'id': section_id})
+def parse_section_text(soup, section_id, container_tags, tag='li', tag_class=None):
+    section = None
+    for container_tag in container_tags:
+        section = soup.find(container_tag, {'id': section_id})
+        if section:
+            break
+
     if not section:
         return []
 
@@ -49,11 +52,10 @@ def parse_posting_info(soup):
     return info_data
 
 def parse_description(soup, section_id):
-    description_data = " ".join(parse_section_text(soup, section_id, tag='p'))
-    return description_data
+    return " ".join(parse_section_text(soup, section_id, ['section', 'div'], tag='p'))
 
 def parse_tasks(soup, section_id):
-    return parse_section_text(soup, section_id, tag='li')
+    return parse_section_text(soup, section_id, ['section', 'div'], tag='li')
 
 def parse_salary_info(soup):
     salary_data = {}
@@ -71,13 +73,7 @@ def parse_salary_info(soup):
     return salary_data
 
 def parse_job_offer_requirements(soup):
-    requirements = []
-    description_section = soup.find('section', {'data-cy-section': 'JobOffer_Requirements'})
-    if description_section:
-        ul = description_section.find('ul')
-        if ul:
-            requirements = [item.get_text(strip=True) for item in ul.find_all('li')]
-    return requirements
+    return parse_section_text(soup, 'JobOffer_Requirements', ['section'], tag='li')
 
 def extract_job_posting_data(url):
     html_content = fetch_html_content(url)
@@ -89,8 +85,8 @@ def extract_job_posting_data(url):
     data = {
         "Header": parse_posting_header(soup),
         "Info": parse_posting_info(soup),
-        "Obowiązkowe": parse_section_text(soup, 'posting-requirements'),
-        "Mile widziane": parse_section_text(soup, 'posting-nice-to-have'),
+        "Obowiązkowe": parse_section_text(soup, 'posting-requirements', ['section', 'div']),
+        "Mile widziane": parse_section_text(soup, 'posting-nice-to-have', ['section', 'div']),
         "Opis wymagań": parse_job_offer_requirements(soup),
         "Opis oferty": parse_description(soup, 'posting-description'),
         "Zakres obowiązków": parse_tasks(soup, 'posting-tasks'),
