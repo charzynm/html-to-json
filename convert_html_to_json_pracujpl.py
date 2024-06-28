@@ -13,6 +13,37 @@ def fetch_html_content(url):
 
 url = 'https://www.pracuj.pl/praca/data-engineer-data-science-hub-warszawa-zelazna-51-53,oferta,1003427675?s=d4b7c35b'
 
+"""
+# Function to parse the job page
+def parse_job_page():
+    # Parse "This is how we organize our work"
+    work_organization_section = soup.find('section', {'data-scroll-id': 'work-organization-1'})
+    if work_organization_section:
+        work_style = work_organization_section.find('li', {'data-test': 'item-work-organization-work-style'})
+        job_details['work_style'] = work_style.get_text(strip=True) if work_style else ''
+    
+    # Parse "Development opportunities we offer"
+    development_opportunities_section = soup.find('section', {'data-scroll-id': 'training-space-1'})
+    if development_opportunities_section:
+        development_opportunities = []
+        for li in development_opportunities_section.find_all('li', {'class': 't174u8f7'}):
+            development_opportunities.append(li.get_text(strip=True))
+        job_details['development_opportunities'] = development_opportunities
+    
+    # Parse "What we offer"
+    what_we_offer_section = soup.find('section', {'data-scroll-id': 'offered-1'})
+    if what_we_offer_section:
+        offers = []
+        for li in what_we_offer_section.find_all('li', {'class': 'tkzmjn3'}):
+            offers.append(li.get_text(strip=True))
+        job_details['offers'] = offers
+    
+    return job_details
+
+# Output the parsed job details
+print(parse_job_page())
+"""
+
 # Parse the HTML content
 soup = BeautifulSoup(fetch_html_content(url), 'html.parser')
 
@@ -50,6 +81,33 @@ expected_technologies = [tech.text for tech in technologies_section.find_all('li
 responsibilities_section = soup.find('section', {'data-test': 'section-responsibilities'})
 responsibilities = [resp.text for resp in responsibilities_section.find_all('li', {'class': 'tkzmjn3'})]
 
+# Parse "Our requirements"
+requirements_section = soup.find('section', {'data-scroll-id': 'requirements-1'})
+requirements = []
+if requirements_section:
+    for li in requirements_section.find_all('li', {'class': 'tkzmjn3'}):
+        requirements.append(li.get_text(strip=True))
+
+# Parse "This is how we organize our work"
+work_organization_section = soup.find('section', {'data-scroll-id': 'work-organization-1'})
+if work_organization_section:
+    work_style = work_organization_section.find('li', {'data-test': 'item-work-organization-work-style'})
+    work_style = work_style.get_text(strip=True) if work_style else ''
+
+# Parse "Development opportunities we offer"
+development_opportunities_section = soup.find('section', {'data-scroll-id': 'training-space-1'})
+development_opportunities = []
+if development_opportunities_section:
+    for li in development_opportunities_section.find_all('li', {'class': 't174u8f7'}):
+        development_opportunities.append(li.get_text(strip=True))
+
+# Parse "What we offer"
+what_we_offer_section = soup.find('section', {'data-scroll-id': 'offered-1'})
+offers = []
+if what_we_offer_section:
+    for li in what_we_offer_section.find_all('li', {'class': 'tkzmjn3'}):
+        offers.append(li.get_text(strip=True))
+
 # Construct the JSON object
 job_data = {
     'company_logo': logo,
@@ -61,7 +119,11 @@ job_data = {
     'technologies': {
         'expected': expected_technologies
     },
-    'responsibilities': responsibilities
+    'responsibilities': responsibilities,
+    'requirements': requirements,
+    'work_style': work_style,
+    'development_opportunities': development_opportunities,
+    'offers': offers
 }
 
 # Convert to JSON string
