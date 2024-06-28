@@ -13,37 +13,6 @@ def fetch_html_content(url):
 
 url = 'https://www.pracuj.pl/praca/data-engineer-data-science-hub-warszawa-zelazna-51-53,oferta,1003427675?s=d4b7c35b'
 
-"""
-# Function to parse the job page
-def parse_job_page():
-    # Parse "This is how we organize our work"
-    work_organization_section = soup.find('section', {'data-scroll-id': 'work-organization-1'})
-    if work_organization_section:
-        work_style = work_organization_section.find('li', {'data-test': 'item-work-organization-work-style'})
-        job_details['work_style'] = work_style.get_text(strip=True) if work_style else ''
-    
-    # Parse "Development opportunities we offer"
-    development_opportunities_section = soup.find('section', {'data-scroll-id': 'training-space-1'})
-    if development_opportunities_section:
-        development_opportunities = []
-        for li in development_opportunities_section.find_all('li', {'class': 't174u8f7'}):
-            development_opportunities.append(li.get_text(strip=True))
-        job_details['development_opportunities'] = development_opportunities
-    
-    # Parse "What we offer"
-    what_we_offer_section = soup.find('section', {'data-scroll-id': 'offered-1'})
-    if what_we_offer_section:
-        offers = []
-        for li in what_we_offer_section.find_all('li', {'class': 'tkzmjn3'}):
-            offers.append(li.get_text(strip=True))
-        job_details['offers'] = offers
-    
-    return job_details
-
-# Output the parsed job details
-print(parse_job_page())
-"""
-
 # Parse the HTML content
 soup = BeautifulSoup(fetch_html_content(url), 'html.parser')
 
@@ -108,6 +77,25 @@ if what_we_offer_section:
     for li in what_we_offer_section.find_all('li', {'class': 'tkzmjn3'}):
         offers.append(li.get_text(strip=True))
 
+# Extract and parse the benefits
+benefits_section = soup.find('section', {'data-test': 'section-benefits'})
+benefits = []
+if benefits_section:
+    benefits_list = benefits_section.find_all('li', {'data-test': 'list-item-benefit'})
+    for benefit in benefits_list:
+        title = benefit.find('div', {'data-test': 'text-benefit-title'}).text.strip()
+        icon = benefit.find('image')['href']
+        benefits.append({'title': title, 'icon': icon})
+
+# Extract and parse the "Why is it worth working with us" section
+worth_working_section = soup.find('section', {'data-test': 'section-additional-module'})
+worth_working_points = []
+if worth_working_section:
+    worth_working_list = worth_working_section.find_all('li')
+    for point in worth_working_list:
+        text = point.get_text(strip=True)
+        worth_working_points.append(text)
+
 # Construct the JSON object
 job_data = {
     'company_logo': logo,
@@ -123,7 +111,9 @@ job_data = {
     'requirements': requirements,
     'work_style': work_style,
     'development_opportunities': development_opportunities,
-    'offers': offers
+    'offers': offers,
+    'benefits': benefits,
+    'worth_working_points': worth_working_points
 }
 
 # Convert to JSON string
