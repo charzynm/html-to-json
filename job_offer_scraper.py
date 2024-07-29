@@ -31,8 +31,13 @@ class JobOfferParser:
     '''
     def __init__(self, html):
         self.soup = BeautifulSoup(html, 'html.parser')
+        self.soup = self.soup.find('div', id = 'offer-details')
+        # Remove all <script> tags
+        for svg in self.soup.find_all('svg'):
+            svg.decompose()
 
     def parse(self):
+        print(self.soup.prettify())
         # Parse job offer details from HTML
         title = self.soup.find('h1').text.strip() if self.soup.find('h1') else 'No title'
         company = self.soup.find('h2').text.strip().split('<a')[0].strip() if self.soup.find('h2') else 'No company'
