@@ -102,7 +102,7 @@ def extract_job_posting_data(url):
 
     return json.dumps(data, ensure_ascii=False, indent=4)
 
-url = 'https://nofluffjobs.com/pl/job/data-engineer-talent-hills-warszawa-1'
+url = 'https://nofluffjobs.com/pl/job/junior-data-engineer-capital-com-warszawa-1'
 json_data = extract_job_posting_data(url)
 if json_data:
     print(json_data)

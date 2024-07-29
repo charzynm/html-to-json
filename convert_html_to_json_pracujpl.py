@@ -11,7 +11,7 @@ def fetch_html_content(url):
         print(f"Error fetching HTML: {e}")
         return None
 
-url = 'https://www.pracuj.pl/praca/data-engineer-data-science-hub-warszawa-zelazna-51-53,oferta,1003427675?s=d4b7c35b'
+url = 'https://www.pracuj.pl/praca/analityk-biznesowy-warszawa-szturmowa-2,oferta,1003457480?s=1f7c2c91'
 
 # Parse the HTML content
 soup = BeautifulSoup(fetch_html_content(url), 'html.parser')
