@@ -7,12 +7,13 @@ class JobOffer:
     Holds job offer details.
     Converts details to dictionary and JSON formats.
     '''
-    def __init__(self, title, company, location, responsibilities, requirements):
+    def __init__(self, title, company, location, responsibilities, requirements, benefits):
         self.title = title
         self.company = company
         self.location = location
         self.responsibilities = responsibilities
         self.requirements = requirements
+        self.benefits = benefits
 
     def to_dict(self):
         return {
@@ -20,7 +21,8 @@ class JobOffer:
             'company': self.company,
             'location': self.location,
             'responsibilities': self.responsibilities,
-            'requirements': self.requirements
+            'requirements': self.requirements,
+            'benefits': self.benefits
         }
 
     def to_json(self):
@@ -49,8 +51,9 @@ class JobOfferParser:
         location = self._parse_location()
         responsibilities = self._parse_responsibilities()
         requirements = self._parse_requirements()
+        benefits = self._parse_benefits()
 
-        return JobOffer(title, company, location, responsibilities, requirements)
+        return JobOffer(title, company, location, responsibilities, requirements, benefits)
 
     def _parse_location(self):
         # Implement location parsing logic
@@ -58,10 +61,9 @@ class JobOfferParser:
         return location_div.text.strip() if location_div else 'No location'
 
     def _parse_responsibilities(self):
-        # Find the responsibilities section
+        # Parse the responsibilities section
         responsibilities_section = self.soup.find('section', {'data-test': 'section-responsibilities'})
 
-        # Return the extracted section
         if responsibilities_section:
             return [resp.text for resp in responsibilities_section.find_all('li', {'class': 'tkzmjn3'})]
         else:
@@ -69,18 +71,22 @@ class JobOfferParser:
 
 
     def _parse_requirements(self):
-        # Find the requirements section
+        # Parse the requirements section
         requirements_section = self.soup.find('section', {'data-scroll-id': 'requirements-1'})
         
-        # Return the extracted section
         if requirements_section:
-            requirements = []
-            for li in requirements_section.find_all('li', {'class': 'tkzmjn3'}):
-                requirements.append(li.get_text(strip=True))
-            return requirements
+            return [resp.text for resp in requirements_section.find_all('li', {'class': 'tkzmjn3'})]
         else:
             return None
         
+    def _parse_benefits(self):
+        # Extract and parse the benefits
+        benefits_section = self.soup.find('section', {'data-test': 'section-benefits'})
+        if benefits_section:
+            return [resp.text for resp in benefits_section.find_all('li', {'data-test': 'list-item-benefit'})]
+        else:
+            return None
+
 class JobOfferScraper:
     '''
     Fetches HTML from provided URLs.
