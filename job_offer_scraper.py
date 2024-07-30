@@ -7,22 +7,24 @@ class JobOffer:
     Holds job offer details.
     Converts details to dictionary and JSON formats.
     '''
-    def __init__(self, title, company, location, details):
+    def __init__(self, title, company, location, responsibilities, requirements):
         self.title = title
         self.company = company
         self.location = location
-        self.details = details
+        self.responsibilities = responsibilities
+        self.requirements = requirements
 
     def to_dict(self):
         return {
             'title': self.title,
             'company': self.company,
             'location': self.location,
-            'details': self.details
+            'responsibilities': self.responsibilities,
+            'requirements': self.requirements
         }
 
     def to_json(self):
-        return json.dumps(self.to_dict(), indent=4)
+        return json.dumps(self.to_dict(), indent=4, ensure_ascii=False)
 
 class JobOfferParser:
     '''
@@ -35,6 +37,9 @@ class JobOfferParser:
         # Remove all <script> tags
         for svg in self.soup.find_all('svg'):
             svg.decompose()
+        # Remove all <button> tags
+        for button in self.soup.find_all('button'):
+            button.decompose()
 
     def parse(self):
         print(self.soup.prettify())
@@ -42,25 +47,40 @@ class JobOfferParser:
         title = self.soup.find('h1').text.strip() if self.soup.find('h1') else 'No title'
         company = self.soup.find('h2').text.strip().split('<a')[0].strip() if self.soup.find('h2') else 'No company'
         location = self._parse_location()
-        details = self._parse_details()
+        responsibilities = self._parse_responsibilities()
+        requirements = self._parse_requirements()
 
-        return JobOffer(title, company, location, details)
+        return JobOffer(title, company, location, responsibilities, requirements)
 
     def _parse_location(self):
         # Implement location parsing logic
         location_div = self.soup.find('ul').find_all('div')[1] if self.soup.find('ul') else None
         return location_div.text.strip() if location_div else 'No location'
 
-    def _parse_details(self):
-        # Implement job details parsing logic
-        details_section = self.soup.find('section', string='Twój zakres obowiązków')
-        if details_section:
-            details = [li.text.strip() for li in details_section.find_next('ul').find_all('li')]
+    def _parse_responsibilities(self):
+        # Find the responsibilities section
+        responsibilities_section = self.soup.find('section', {'data-test': 'section-responsibilities'})
+
+        # Return the extracted section
+        if responsibilities_section:
+            return [resp.text for resp in responsibilities_section.find_all('li', {'class': 'tkzmjn3'})]
         else:
-            details = []
+            return None
 
-        return details
 
+    def _parse_requirements(self):
+        # Find the requirements section
+        requirements_section = self.soup.find('section', {'data-scroll-id': 'requirements-1'})
+        
+        # Return the extracted section
+        if requirements_section:
+            requirements = []
+            for li in requirements_section.find_all('li', {'class': 'tkzmjn3'}):
+                requirements.append(li.get_text(strip=True))
+            return requirements
+        else:
+            return None
+        
 class JobOfferScraper:
     '''
     Fetches HTML from provided URLs.
@@ -83,8 +103,7 @@ class JobOfferScraper:
             if html:
                 parser = JobOfferParser(html)
                 job_offer = parser.parse()
-                job_offers.append(job_offer.to_dict())
-
+                job_offers.append(job_offer.to_json())
         return job_offers
 
 if __name__ == '__main__':
@@ -95,4 +114,4 @@ if __name__ == '__main__':
     offers = scraper.scrape()
 
     for offer in offers:
-        print(json.dumps(offer, indent=4))
+        print(offer)
