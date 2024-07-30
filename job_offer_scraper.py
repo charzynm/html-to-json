@@ -42,6 +42,20 @@ class JobOfferParser:
         # Remove all <button> tags
         for button in self.soup.find_all('button'):
             button.decompose()
+        # Find and decompose empty tags
+        for tag in self.soup.find_all():
+            if self._is_empty(tag):
+                tag.decompose()
+
+    # Function to recursively check if a tag is empty
+    def _is_empty(self, tag):
+    # If the tag contains any text or has children with text, it's not empty
+        if tag.string and tag.string.strip():
+            return False
+        for child in tag.descendants:
+            if child.string and child.string.strip():
+                return False
+        return True
 
     def parse(self):
         print(self.soup.prettify())
