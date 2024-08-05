@@ -7,13 +7,15 @@ class JobOffer:
     Holds job offer details.
     Converts details to dictionary and JSON formats.
     '''
-    def __init__(self, title, company, details, technologies, responsibilities, requirements, benefits):
+    def __init__(self, title, company, details, technologies, responsibilities, requirements, development_opportunities, offered, benefits):
         self.title = title
         self.company = company
         self.details = details
         self.technologies = technologies
         self.responsibilities = responsibilities
         self.requirements = requirements
+        self.development_opportunities = development_opportunities
+        self.offered = offered
         self.benefits = benefits
 
     def to_dict(self):
@@ -24,6 +26,8 @@ class JobOffer:
             'technologies': self.technologies,
             'responsibilities': self.responsibilities,
             'requirements': self.requirements,
+            'development_opportunities': self.development_opportunities,
+            'offered': self.offered,
             'benefits': self.benefits
         }
 
@@ -68,9 +72,11 @@ class JobOfferParser:
         job_technologies = self._parse_job_technologies()
         responsibilities = self._parse_responsibilities()
         requirements = self._parse_requirements()
+        development_opportunities = self._parse_development_opportunities()
+        offered = self._parse_offered()
         benefits = self._parse_benefits()
 
-        return JobOffer(title, company, job_details, job_technologies, responsibilities, requirements, benefits)
+        return JobOffer(title, company, job_details, job_technologies, responsibilities, requirements, development_opportunities, offered, benefits)
 
     def _parse_job_details(self):
         # Extract job details
@@ -118,6 +124,24 @@ class JobOfferParser:
         else:
             return None
         
+    def _parse_development_opportunities(self):       
+        # Parse the opportunities section
+        opportunities_section = self.soup.find('section', {'data-scroll-id': 'training-space-1'})
+
+        if opportunities_section:
+            return [resp.text for resp in opportunities_section.find_all('li', {'class': 't174u8f7'})]
+        else:
+            return None
+        
+    def _parse_offered(self):
+        # Parse the offered section
+        offered_section = self.soup.find('section', {'data-scroll-id': 'offered-1'})
+
+        if offered_section:
+            return [resp.text for resp in offered_section.find_all('li', {'class': 'tkzmjn3'})]
+        else:
+            return None
+
     def _parse_benefits(self):
         # Extract and parse the benefits
         benefits_section = self.soup.find('section', {'data-test': 'section-benefits'})
