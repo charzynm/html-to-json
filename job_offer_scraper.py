@@ -60,8 +60,8 @@ class JobOfferParser:
     def parse(self):
         print(self.soup.prettify())
         # Parse job offer details from HTML
-        title = self.soup.find('h1').text.strip() if self.soup.find('h1') else 'No title'
-        company = self.soup.find('h2').text.strip().split('<a')[0].strip() if self.soup.find('h2') else 'No company'
+        title = self.soup.find('h1', {'data-test': 'text-positionName'}).text.strip() if self.soup.find('h1') else 'No title'
+        company = self.soup.find('h2', {'data-test': 'text-employerName'}).contents[0].strip() if self.soup.find('h2') else 'No company'
         job_details = self._parse_job_details()
         responsibilities = self._parse_responsibilities()
         requirements = self._parse_requirements()
@@ -72,28 +72,15 @@ class JobOfferParser:
     def _parse_job_details(self):
         # Extract job details
         job_details = {}
-        benefit_list = self.soup.find('ul', {'data-test': 'sections-benefit-list'}).find_all('li')
 
-        for item in benefit_list:
-            title = item.find('div', {'data-test': 'offer-badge-title'}).text.strip()
-            description_tag = item.find('div', {'data-test': 'offer-badge-description'})
-            description = description_tag.text.strip() if description_tag else title
-            
-            # Match the title to the corresponding job detail
-            if "Szturmowa" in title:
-                job_details['location'] = title
-                job_details['region'] = description
-            elif "ważna jeszcze" in title:
-                job_details['validity'] = title
-                job_details['expiration_date'] = description
-            elif "umowa" in title:
-                job_details['contract_type'] = title
-            elif "pełny etat" in title:
-                job_details['work_schedule'] = title
-            elif "specjalista" in title:
-                job_details['position_level'] = title
-            elif "praca hybrydowa" in title:
-                job_details['work_mode'] = title
+        job_details['location'] = self.soup.find('li', {'data-test': 'sections-benefit-workplaces'}).find('a').text.strip()
+        job_details['expiration_date'] = self.soup.find('li', {'data-test': 'sections-benefit-expiration'}).find('div', {'data-test': 'offer-badge-description'}).text.strip()
+        job_details['contract_type'] = self.soup.find('li', {'data-test': 'sections-benefit-contracts'}).find('div', {'data-test': 'offer-badge-title'}).text.strip()
+        job_details['work_schedule'] = self.soup.find('li', {'data-test': 'sections-benefit-work-schedule'}).find('div', {'data-test': 'offer-badge-title'}).text.strip()
+        job_details['position_level'] = self.soup.find('li', {'data-test': 'sections-benefit-employment-type-name'}).find('div', {'data-test': 'offer-badge-title'}).text.strip()
+        job_details['work_mode'] = self.soup.find('li', {'data-scroll-id': 'work-modes'}).find('div', {'data-test': 'offer-badge-title'}).text.strip()
+        job_details['spetializations'] = self.soup.find('li', {'data-test': 'it-specializations'}).find('div', {'class': 'v1xz4nnx'}).text.strip()
+
         return job_details
                 
     def _parse_responsibilities(self):
@@ -150,7 +137,7 @@ class JobOfferScraper:
 
 if __name__ == '__main__':
     urls = [
-        'https://www.pracuj.pl/praca/analityk-biznesowy-warszawa-szturmowa-2,oferta,1003457480',
+        'https://www.pracuj.pl/praca/data-analyst-warszawa-aleje-jerozolimskie-180,oferta,1003463712?s=9786d524',
     ]
     scraper = JobOfferScraper(urls)
     offers = scraper.scrape()
