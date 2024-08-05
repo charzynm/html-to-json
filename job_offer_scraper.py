@@ -7,10 +7,11 @@ class JobOffer:
     Holds job offer details.
     Converts details to dictionary and JSON formats.
     '''
-    def __init__(self, title, company, details, responsibilities, requirements, benefits):
+    def __init__(self, title, company, details, technologies, responsibilities, requirements, benefits):
         self.title = title
         self.company = company
         self.details = details
+        self.technologies = technologies
         self.responsibilities = responsibilities
         self.requirements = requirements
         self.benefits = benefits
@@ -20,6 +21,7 @@ class JobOffer:
             'title': self.title,
             'company': self.company,
             'details': self.details,
+            'technologies': self.technologies,
             'responsibilities': self.responsibilities,
             'requirements': self.requirements,
             'benefits': self.benefits
@@ -63,11 +65,12 @@ class JobOfferParser:
         title = self.soup.find('h1', {'data-test': 'text-positionName'}).text.strip() if self.soup.find('h1') else 'No title'
         company = self.soup.find('h2', {'data-test': 'text-employerName'}).contents[0].strip() if self.soup.find('h2') else 'No company'
         job_details = self._parse_job_details()
+        job_technologies = self._parse_job_technologies()
         responsibilities = self._parse_responsibilities()
         requirements = self._parse_requirements()
         benefits = self._parse_benefits()
 
-        return JobOffer(title, company, job_details, responsibilities, requirements, benefits)
+        return JobOffer(title, company, job_details, job_technologies, responsibilities, requirements, benefits)
 
     def _parse_job_details(self):
         # Extract job details
@@ -83,6 +86,19 @@ class JobOfferParser:
 
         return job_details
                 
+    def _parse_job_technologies(self):
+        job_technologies = {}
+
+        # Extract expected technologies
+        expected_section = self.soup.find('div', {'data-test': 'section-technologies-expected'})
+        job_technologies['expected'] = [li.text.strip() for li in expected_section.find_all('li', {'data-test': 'item-technologies-expected'})]
+        
+        # Extract optional technologies
+        optional_section = self.soup.find('div', {'data-test': 'section-technologies-optional'})
+        job_technologies['optional'] = [li.text.strip() for li in optional_section.find_all('li', {'data-test': 'item-technologies-optional'})]
+
+        return job_technologies
+    
     def _parse_responsibilities(self):
         # Parse the responsibilities section
         responsibilities_section = self.soup.find('section', {'data-test': 'section-responsibilities'})
