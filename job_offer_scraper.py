@@ -88,7 +88,11 @@ class JobOfferParser:
         job_details['work_schedule'] = self.soup.find('li', {'data-test': 'sections-benefit-work-schedule'}).find('div', {'data-test': 'offer-badge-title'}).text.strip()
         job_details['position_level'] = self.soup.find('li', {'data-test': 'sections-benefit-employment-type-name'}).find('div', {'data-test': 'offer-badge-title'}).text.strip()
         job_details['work_mode'] = self.soup.find('li', {'data-scroll-id': 'work-modes'}).find('div', {'data-test': 'offer-badge-title'}).text.strip()
-        job_details['spetializations'] = self.soup.find('li', {'data-test': 'it-specializations'}).find('div', {'class': 'v1xz4nnx'}).text.strip()
+        specializations_element = self.soup.find('li', {'data-test': 'it-specializations'})
+        if specializations_element:
+            job_details['spetializations'] = specializations_element.find('div', {'class': 'v1xz4nnx'})
+        else:
+            job_details['spetializations'] = None
 
         return job_details
                 
@@ -101,7 +105,10 @@ class JobOfferParser:
         
         # Extract optional technologies
         optional_section = self.soup.find('div', {'data-test': 'section-technologies-optional'})
-        job_technologies['optional'] = [li.text.strip() for li in optional_section.find_all('li', {'data-test': 'item-technologies-optional'})]
+        if optional_section:
+            job_technologies['optional'] = [li.text.strip() for li in optional_section.find_all('li', {'data-test': 'item-technologies-optional'})]
+        else:
+            job_technologies['optional'] = None
 
         return job_technologies
     
@@ -177,7 +184,7 @@ class JobOfferScraper:
 
 if __name__ == '__main__':
     urls = [
-        'https://www.pracuj.pl/praca/data-analyst-warszawa-aleje-jerozolimskie-180,oferta,1003463712?s=9786d524',
+        'https://www.pracuj.pl/praca/bi-software-engineer-warszawa-inflancka-4a,oferta,1003518678',
     ]
     scraper = JobOfferScraper(urls)
     offers = scraper.scrape()
