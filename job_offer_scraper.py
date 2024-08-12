@@ -32,6 +32,7 @@ class JobOffer:
         }
 
     def to_json(self):
+        #print(self.to_dict())
         return json.dumps(self.to_dict(), indent=4, ensure_ascii=False)
 
 class JobOfferParser:
@@ -90,7 +91,7 @@ class JobOfferParser:
         job_details['work_mode'] = self.soup.find('li', {'data-scroll-id': 'work-modes'}).find('div', {'data-test': 'offer-badge-title'}).text.strip()
         specializations_element = self.soup.find('li', {'data-test': 'it-specializations'})
         if specializations_element:
-            job_details['spetializations'] = specializations_element.find('div', {'class': 'v1xz4nnx'})
+            job_details['spetializations'] = specializations_element.find('div', {'class': 'v1xz4nnx'}).text.strip()
         else:
             job_details['spetializations'] = None
 
@@ -101,8 +102,11 @@ class JobOfferParser:
 
         # Extract expected technologies
         expected_section = self.soup.find('div', {'data-test': 'section-technologies-expected'})
-        job_technologies['expected'] = [li.text.strip() for li in expected_section.find_all('li', {'data-test': 'item-technologies-expected'})]
-        
+        if expected_section:
+            job_technologies['expected'] = [li.text.strip() for li in expected_section.find_all('li', {'data-test': 'item-technologies-expected'})]
+        else:
+            job_technologies['expected'] = None
+
         # Extract optional technologies
         optional_section = self.soup.find('div', {'data-test': 'section-technologies-optional'})
         if optional_section:
@@ -184,7 +188,7 @@ class JobOfferScraper:
 
 if __name__ == '__main__':
     urls = [
-        'https://www.pracuj.pl/praca/bi-software-engineer-warszawa-inflancka-4a,oferta,1003518678',
+        'https://www.pracuj.pl/praca/mlodszy-analityk-danych-mlodsza-analityczka-danych-warszawa-domaniewska-48,oferta,1003485756',
     ]
     scraper = JobOfferScraper(urls)
     offers = scraper.scrape()
